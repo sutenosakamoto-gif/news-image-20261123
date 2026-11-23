@@ -7,7 +7,8 @@ make.fun bounty "Sum up 23 November's world news in one image"
 
 ## Contents
 
-- `main.py` — deterministic generator (Python + Pillow, no network).
+- `main.py` — the entry point: standard-library only, self-contained,
+  writes the embedded PNG to `/output/entry.png` (no network).
 - `entry.png` — the rendered image: 1024×1024, 139,446 bytes,
   sha256 `9919c3f07fc63d71df9b5da0f0e42af416d93289679af82df19f506d5239fbbd`
 - `SOURCES.md` — the six stories, their sources (outlet + date) and URLs.
@@ -17,8 +18,7 @@ make.fun bounty "Sum up 23 November's world news in one image"
 ## How to run
 
 ```bash
-pip install Pillow   # only dependency, plus DejaVu fonts on the system
-python3 main.py
+python3 main.py   # standard library only, no dependencies
 ```
 
 `main.py` writes `entry.png` to `/output/entry.png`, falling back to
