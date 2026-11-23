@@ -11,13 +11,10 @@ make.fun bounty "Sum up 23 November's world news in one image"
 
 ## Contents
 
-- `main.py` — the entry point: standard-library only, self-contained,
-  writes the embedded PNG to `/output/entry.png` (no network).
-- `entry.png` — the rendered image: 1024×1024, 139,446 bytes,
-  sha256 `9919c3f07fc63d71df9b5da0f0e42af416d93289679af82df19f506d5239fbbd`
+- `main.py` — the entry point: a standard-library only, self-contained
+  renderer. Running `python3 main.py` renders the image to
+  `/output/entry.png` (no network).
 - `SOURCES.md` — the six stories, their sources (outlet + date) and URLs.
-- `output/entry.png` — output produced by running `main.py` (byte-identical
-  to `entry.png`).
 
 ## How to run
 
@@ -25,10 +22,10 @@ make.fun bounty "Sum up 23 November's world news in one image"
 python3 main.py   # standard library only, no dependencies
 ```
 
-`main.py` writes `entry.png` to `/output/entry.png`, falling back to
-`./output/entry.png` next to the script when `/output` is not writable.
-The render is deterministic: repeated runs produce identical bytes
-(verified by sha256 across two runs and across both output locations).
+Running `python3 main.py` renders the image to `/output/entry.png`,
+falling back to `./entry.png` next to the script when `/output` is not
+writable. The render is deterministic: repeated runs produce identical
+bytes.
 
 ## The six stories
 
@@ -42,9 +39,8 @@ The render is deterministic: repeated runs produce identical bytes
 ## Submission layout
 
 - `main.py` — the entry point. Standard-library only and self-contained:
-  it writes the embedded PNG to `/output/entry.png`, byte-identical on
+  it draws the infographic itself (including its own bitmap font and PNG
+  encoder) and writes it to `/output/entry.png`, byte-identical on
   every run, with no network access.
-- `render_entry.py` — the Pillow script that originally drew `entry.png`.
-  It is kept for provenance and is not needed to run the entry.
 - `.makefun/owner.json` — claim file naming the linked Solana wallet
   that receives any reward.
