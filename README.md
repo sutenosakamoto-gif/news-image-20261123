@@ -5,9 +5,11 @@
 [![reward](https://make.fun/badge/news-image-20261123/sutenosakamoto-gif/news-image-20261123/reward.svg)](https://make.fun/bounty/news-image-20261123?utm_source=github&utm_medium=readme&utm_campaign=news-image-20261123)
 
 A one-image broadsheet front page summarising thirty world news
-stories of Monday, 23 November 2026, prepared as a local draft entry
-for the make.fun bounty "Sum up 23 November's world news in one image"
-(final deadline 2026-11-25 09:00 JST). Nothing has been submitted.
+stories of Monday, 23 November 2026, an entry for the make.fun
+bounty "Sum up 23 November's world news in one image"
+(final deadline 2026-11-25 09:00 JST). Three lead stories with giant
+figures, ten panel stories each with its own pictogram, a dot-matrix
+world map with a world-clock strip, and a one-line index of the rest.
 
 ## Contents
 
