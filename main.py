@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""World News - 23 November 2026, in one image.
+"""World News - 23 November 2026, in one image (v2: newspaper front page).
 
 A self-contained renderer: running this program draws a 1024x1024
-infographic summarising six world news stories of Monday, 23 November
-2026 and writes it as a PNG to /output/entry.png (falling back to
-./entry.png when /output is not writable).
+broadsheet-style front page summarising thirty world news stories of
+Monday, 23 November 2026 and writes it as a PNG to /output/entry.png
+(falling back to ./entry.png when /output is not writable).
 
 Only the Python standard library is used (zlib/struct for the PNG
 encoding).  All drawing - including the bitmap font - is implemented
@@ -157,6 +157,8 @@ FONT = {
     '+': (".....", "..#..", "..#..", "#####", "..#..", "..#..", "....."),
     '!': ("..#..", "..#..", "..#..", "..#..", "..#..", ".....", "..#.."),
     '?': (".###.", "#...#", "....#", "...#.", "..#..", ".....", "..#.."),
+    '$': (".###.", "#.#.#", "#.#..", ".###.", "..#.#", "#.#.#", ".###."),
+    '%': ("##..#", "#.#.#", "##.#.", "...#.", "..#..", ".#.##", "#..##"),
 }
 
 
@@ -202,194 +204,203 @@ def wrap_text(text, scale, max_width):
 
 
 # ---------------------------------------------------------------- layout
+# Broadsheet front page: cream paper, black ink, one red accent.
 
-BG = (13, 20, 36)
-PANEL = (24, 34, 56)
-PANEL_EDGE = (64, 84, 120)
-TITLE = (240, 244, 250)
-SUB = (160, 175, 200)
-HEADLINE = (235, 240, 248)
-DETAIL = (170, 182, 205)
-WHITE = (225, 232, 242)
-GREY = (120, 134, 158)
+PAPER = (247, 241, 226)
+PANEL_BG = (253, 250, 241)
+INK = (18, 18, 20)
+RED = (178, 32, 38)
+FAINT = (96, 90, 78)
+RULE = (18, 18, 20)
 
-# Each story: (number, accent colour, tag, headline, detail, source, motif)
-STORIES = [
-    ("1", (240, 160, 60), "CLIMATE - ANTALYA, TURKIYE",
-     "COP31 talks end without a deal",
-     "EU and 130 parties reject a text with no fossil-fuel phase-out",
-     "REUTERS", "climate"),
-    ("2", (90, 150, 240), "UKRAINE - DYMER, KYIV REGION",
-     "Russian attack on Dymer kills 11",
-     "Toll rises as rescuers pull another body from the rubble",
-     "REUTERS", "house"),
-    ("3", (230, 90, 80), "SUDAN - KHARTOUM",
-     "Drone strikes hit homes and a U.N. building",
-     "Explosions heard near the airport from 2:00 to 4:30 a.m.",
-     "AFP / JAPAN TIMES", "drone"),
-    ("4", (245, 110, 50), "INDONESIA - BANTEN",
-     "Factory fire kills 24; 30 still missing",
-     "Weekend blaze at a candy factory in Cikande, Serang regency",
-     "REUTERS", "factory"),
-    ("5", (80, 200, 140), "MARKETS - GLOBAL",
-     "AI sell-off shakes markets; futures rebound",
-     "Asia mixed: Taiwan up, South Korea's KOSPI down",
-     "REUTERS", "chart"),
-    ("6", (170, 130, 240), "SPACE - MERCURY",
-     "Japan-Europe probes enter Mercury orbit",
-     "BepiColombo's Mio and MPO arrive after an eight-year journey",
-     "JIJI / JAPAN TIMES", "orbit"),
+# The three lead stories: (tag, headline, detail, giant, motif)
+LEADS = [
+    ("MARKETS - GLOBAL",
+     "NVIDIA LEAPS AS HUANG RETURNS AS CEO",
+     "SHARES SOAR AFTER THE AI SELL-OFF; NASDAQ UP 6.5%",
+     "+31%", "chart"),
+    ("CLIMATE - ANTALYA",
+     "COP31 TALKS END WITHOUT A DEAL",
+     "130+ PARTIES REJECT A TEXT WITH NO FOSSIL-FUEL PHASE-OUT",
+     "130+", "globe"),
+    ("DISASTER - INDONESIA",
+     "CANDY FACTORY FIRE KILLS 24 WORKERS",
+     "ABOUT 30 PEOPLE STILL MISSING AFTER THE WEEKEND BLAZE",
+     "24", "flame"),
+]
+
+# Ten medium stories: (tag, headline line 1, headline line 2)
+MEDIUM = [
+    ("EUROPE - REUTERS", "DYMER, UKRAINE: RUSSIAN ATTACK",
+     "KILLS 11 AS RESCUERS SEARCH RUBBLE"),
+    ("AFRICA - AFP", "KHARTOUM, SUDAN: DRONE STRIKES HIT",
+     "HOMES AND A U.N. BUILDING"),
+    ("EUROPE - AP", "LIBYA: UKRAINE SINKS RUSSIAN",
+     "WARSHIP IN NAVAL DRONE ATTACK"),
+    ("EUROPE - REUTERS", "GERMANY: BOMB THREATS SENT TO",
+     "ABOUT 450 SCHOOLS BY EMAIL"),
+    ("N. AMERICA - AP", "U.S. HOUSE: DEMOCRATS CLINCH",
+     "258-SEAT MAJORITY, BEST SINCE 1992"),
+    ("AFRICA - REUTERS", "CONGO HALTS COBALT EXPORTS",
+     "AGAIN TO LIFT WEAK PRICES"),
+    ("EUROPE - REUTERS", "SPAIN: COURT CLEARS CATALAN",
+     "LEADER PUIGDEMONT TO RETURN"),
+    ("MIDDLE EAST - REUTERS", "SYRIA: U.S. DISCUSSES TRAINING",
+     "SYRIAN FORCES IN DEMINING"),
+    ("WORLD SPORT - AP", "FIFA PICKS U.S.-LED BID FOR 2031",
+     "WOMEN'S WORLD CUP; UK GETS 2035"),
+    ("SPACE - JIJI", "MERCURY: JAPAN-EUROPE PROBES",
+     "ENTER ORBIT AFTER 8 YEARS"),
+]
+
+# Seventeen more stories, one line each, for the "also" list.
+ALSO = [
+    "N. KOREA MAY SHUT SWISS OFFICE",
+    "CZECH + HUNGARY REJECT EU BUDGET",
+    "RUSSIA: $576M KALININGRAD FERRIES",
+    "EU PROPOSES NEW RUSSIA SANCTIONS",
+    "EU SIGNS TRADE DEAL WITH INDONESIA",
+    "CROWDSTRIKE BUYS ZSCALER FOR $44BN",
+    "HONDA RECALLS 810,000 VEHICLES",
+    "FBI PROBES CRIME DATABASE HACK",
+    "REP. GOMEZ RESIGNS: ETHICS REPORT",
+    "DELTA FAULT DELAYS HOLIDAY FLIGHTS",
+    "VERSTAPPEN WINS LAS VEGAS GP",
+    "SKUBAL AGREES RECORD $450M METS DEAL",
+    "GOLD REBOUNDS NEARLY 5%",
+    "CANADA, QATAR INK INVESTMENT PACT",
+    "CHINA: DEATH SENTENCE FOR SPY OFFICIAL",
+    "9 SHOT AT CALIFORNIA CONCERT",
+    "BELGIUM FLIGHTS GROUNDED BY STRIKE",
 ]
 
 
 # ---------------------------------------------------------------- motifs
-# Small pictograms, each drawn around a centre point (cx, cy).
-
-def motif_climate(cv, cx, cy):
-    # A globe with a crack in it and a red "no deal" slash across.
-    cv.ring(cx, cy, 34, (90, 160, 240), 3)
-    cv.polyline([(cx - 30, cy + 6), (cx - 12, cy - 2), (cx + 4, cy + 6),
-                 (cx + 20, cy - 2), (cx + 31, cy + 4)], (90, 160, 240), 2)
-    cv.polyline([(cx - 4, cy - 33), (cx + 3, cy - 14), (cx - 5, cy + 2),
-                 (cx + 4, cy + 18), (cx - 2, cy + 33)], (240, 160, 60), 3)
-    cv.line(cx - 40, cy + 40, cx + 40, cy - 40, (230, 70, 60), 4)
-
-
-def motif_house(cv, cx, cy):
-    # A house with a cracked wall and an explosion burst beside it.
-    cv.rect_outline(cx - 32, cy - 2, 58, 36, WHITE, 3)
-    cv.line(cx - 38, cy - 2, cx - 3, cy - 30, WHITE, 3)
-    cv.line(cx - 3, cy - 30, cx + 32, cy - 2, WHITE, 3)
-    cv.polyline([(cx - 12, cy + 2), (cx - 6, cy + 12), (cx - 13, cy + 20),
-                 (cx - 7, cy + 30)], (230, 90, 80), 2)
-    cv.fill_rect(cx - 6, cy + 14, 12, 20, (90, 150, 240))
-    bx, by = cx + 38, cy - 32
-    for dx, dy in ((0, -12), (9, -9), (12, 0), (9, 9), (0, 12),
-                   (-9, 9), (-12, 0), (-9, -9)):
-        cv.line(bx, by, bx + dx, by + dy, (250, 200, 70), 3)
-    cv.fill_circle(bx, by, 4, (250, 200, 70))
-
-
-def motif_drone(cv, cx, cy):
-    # A quadcopter seen from the front, rotors spinning at the corners.
-    for dx, dy in ((-30, -20), (30, -20), (-30, 20), (30, 20)):
-        cv.line(cx, cy, cx + dx, cy + dy, GREY, 3)
-        cv.ring(cx + dx, cy + dy, 8, WHITE, 2)
-    cv.fill_rect(cx - 11, cy - 7, 22, 14, WHITE)
-    cv.fill_circle(cx, cy + 20, 4, (230, 70, 60))
-    cv.line(cx, cy + 7, cx, cy + 16, GREY, 2)
-
-
-def motif_factory(cv, cx, cy):
-    # A factory block with a chimney and flames over the roof.
-    cv.fill_rect(cx - 40, cy + 4, 58, 32, GREY)
-    cv.fill_rect(cx + 24, cy - 16, 12, 52, GREY)
-    cv.polyline([(cx - 40, cy + 4), (cx - 26, cy - 8), (cx - 12, cy + 4),
-                 (cx + 2, cy - 8), (cx + 16, cy + 4)], WHITE, 2)
-    for fx in (cx - 30, cx - 12, cx + 6):
-        cv.fill_triangle(fx - 7, cy - 6, fx + 7, cy - 6, fx, cy - 30,
-                         (245, 110, 50))
-        cv.fill_triangle(fx - 4, cy - 6, fx + 4, cy - 6, fx, cy - 20,
-                         (250, 200, 70))
-    cv.fill_rect(cx - 32, cy + 20, 8, 10, (250, 200, 70))
-    cv.fill_rect(cx - 16, cy + 20, 8, 10, (250, 200, 70))
-
+# Bold pictograms for the three lead panels, drawn around (cx, cy).
 
 def motif_chart(cv, cx, cy):
-    # A market line: down hard in red, then rebounding in green.
-    cv.line(cx - 44, cy + 30, cx + 46, cy + 30, GREY, 2)
-    cv.line(cx - 44, cy + 30, cx - 44, cy - 32, GREY, 2)
-    cv.polyline([(cx - 40, cy - 14), (cx - 18, cy + 2), (cx - 2, cy + 20)],
-                (230, 80, 70), 3)
-    cv.polyline([(cx - 2, cy + 20), (cx + 20, cy - 4), (cx + 42, cy - 24)],
-                (80, 210, 140), 3)
-    cv.polyline([(cx + 42, cy - 24), (cx + 32, cy - 23), (cx + 41, cy - 14)],
-                (80, 210, 140), 3)
+    # A market line crashing, then rebounding steeply in red.
+    cv.line(cx - 42, cy + 30, cx + 44, cy + 30, INK, 3)
+    cv.line(cx - 42, cy + 30, cx - 42, cy - 30, INK, 3)
+    cv.polyline([(cx - 38, cy - 16), (cx - 16, cy + 4), (cx - 2, cy + 20)],
+                INK, 4)
+    cv.polyline([(cx - 2, cy + 20), (cx + 18, cy - 6), (cx + 40, cy - 26)],
+                RED, 5)
+    cv.polyline([(cx + 40, cy - 26), (cx + 29, cy - 25), (cx + 39, cy - 15)],
+                RED, 4)
 
 
-def motif_orbit(cv, cx, cy):
-    # Mercury with an orbit ring and the two BepiColombo orbiters.
-    px, py = cx - 16, cy + 12
-    cv.ring(px, py, 44, GREY, 2)
-    cv.fill_circle(px, py, 25, (203, 152, 110))
-    cv.line(px - 22, py - 6, px + 22, py - 10, (160, 112, 74), 3)
-    cv.line(px - 24, py + 8, px + 24, py + 4, (160, 112, 74), 3)
-    for sx, sy in ((cx + 28, cy - 28), (cx + 34, cy + 16)):
-        cv.fill_rect(sx - 13, sy - 3, 9, 6, (90, 150, 240))
-        cv.fill_rect(sx + 4, sy - 3, 9, 6, (90, 150, 240))
-        cv.fill_rect(sx - 4, sy - 4, 8, 8, WHITE)
+def motif_globe(cv, cx, cy):
+    # A globe with a crack, and a red slash: the talks failed.
+    cv.ring(cx, cy, 32, INK, 4)
+    cv.polyline([(cx - 28, cy + 6), (cx - 11, cy - 2), (cx + 4, cy + 6),
+                 (cx + 19, cy - 2), (cx + 29, cy + 4)], INK, 3)
+    cv.polyline([(cx - 3, cy - 31), (cx + 3, cy - 13), (cx - 4, cy + 3),
+                 (cx + 3, cy + 17), (cx - 2, cy + 31)], RED, 4)
+    cv.line(cx - 38, cy + 38, cx + 38, cy - 38, RED, 5)
 
 
-MOTIFS = {
-    "climate": motif_climate,
-    "house": motif_house,
-    "drone": motif_drone,
-    "factory": motif_factory,
-    "chart": motif_chart,
-    "orbit": motif_orbit,
-}
+def motif_flame(cv, cx, cy):
+    # A factory block with flames over the roof.
+    cv.fill_rect(cx - 40, cy + 6, 56, 30, INK)
+    cv.fill_rect(cx + 24, cy - 12, 12, 48, INK)
+    for fx in (cx - 28, cx - 10, cx + 8):
+        cv.fill_triangle(fx - 8, cy - 2, fx + 8, cy - 2, fx, cy - 32, RED)
+    cv.fill_rect(cx - 30, cy + 20, 9, 10, PAPER)
+    cv.fill_rect(cx - 14, cy + 20, 9, 10, PAPER)
+
+
+MOTIFS = {"chart": motif_chart, "globe": motif_globe, "flame": motif_flame}
 
 
 # ---------------------------------------------------------------- panels
 
-MARGIN = 24
-PANEL_W = 480
-PANEL_H = 268
-PANEL_GAP = 16
-PANELS_TOP = 132
-ROW_GAP = 14
+MARGIN = 20
+CONTENT_W = WIDTH - 2 * MARGIN  # 984
 
 
-def draw_panel(cv, x, y, story):
-    number, accent, tag, headline, detail, source, motif = story
-    cv.fill_rect(x, y, PANEL_W, PANEL_H, PANEL)
-    cv.rect_outline(x, y, PANEL_W, PANEL_H, PANEL_EDGE, 2)
+def draw_lead(cv, x, y, w, h, story):
+    tag, headline, detail, giant, motif = story
+    cv.fill_rect(x, y, w, h, PANEL_BG)
+    cv.rect_outline(x, y, w, h, RULE, 2)
+    cv.fill_rect(x, y, w, 7, RED)
 
-    # Number disc and category tag.
-    cv.fill_circle(x + 27, y + 25, 12, accent)
-    draw_text(cv, x + 22, y + 18, number, 2, BG)
-    draw_text(cv, x + 48, y + 17, tag, 2, accent)
+    draw_text(cv, x + 14, y + 16, tag, 2, RED)
 
-    # Headline, wrapped to leave the right-hand column for the motif.
-    lines = wrap_text(headline, 3, PANEL_W - 32 - 128)
-    hy = y + 48
-    for line_text in lines:
-        draw_text(cv, x + 16, hy, line_text, 3, HEADLINE)
+    hy = y + 40
+    for line_text in wrap_text(headline, 3, w - 28):
+        draw_text(cv, x + 14, hy, line_text, 3, INK)
         hy += 27
 
-    # Motif pictogram in the right-hand column.
-    MOTIFS[motif](cv, x + PANEL_W - 72, y + 96)
+    dy = y + 124
+    for line_text in wrap_text(detail, 2, w - 28):
+        draw_text(cv, x + 14, dy, line_text, 2, FAINT)
+        dy += 18
 
-    # Detail text under the headline.
-    dy = max(hy + 12, y + 160)
-    for line_text in wrap_text(detail, 2, PANEL_W - 32):
-        draw_text(cv, x + 16, dy, line_text, 2, DETAIL)
-        dy += 19
+    # The giant key number, bottom left; motif at bottom right.
+    draw_text(cv, x + 14, y + h - 62, giant, 8, RED)
+    MOTIFS[motif](cv, x + w - 62, y + h - 48)
 
-    # Source line at the bottom of the panel.
-    draw_text(cv, x + 16, y + PANEL_H - 28, "SOURCE: " + source, 2, SUB)
+
+def draw_medium(cv, x, y, w, h, story):
+    tag, line1, line2 = story
+    cv.fill_rect(x, y, w, h, PANEL_BG)
+    cv.rect_outline(x, y, w, h, RULE, 1)
+    cv.fill_rect(x, y, 6, h, RED)
+    draw_text(cv, x + 14, y + 6, tag, 2, RED)
+    draw_text(cv, x + 14, y + 24, line1, 2, INK)
+    draw_text(cv, x + 14, y + 42, line2, 2, INK)
 
 
 def render():
-    cv = Canvas(WIDTH, HEIGHT, BG)
+    cv = Canvas(WIDTH, HEIGHT, PAPER)
 
-    # Header: title and date line.
-    draw_text_centered(cv, 24, "WORLD NEWS", 7, TITLE)
-    draw_text_centered(cv, 84, "MONDAY 23 NOVEMBER 2026", 2, SUB)
-    cv.fill_rect(MARGIN, 116, WIDTH - 2 * MARGIN, 3, PANEL_EDGE)
+    # Masthead: red rules, the title, then the date in huge type.
+    cv.fill_rect(MARGIN, 14, CONTENT_W, 4, RED)
+    cv.fill_rect(MARGIN, 22, CONTENT_W, 2, RULE)
+    draw_text_centered(cv, 30, "THE DAILY WORLD", 8, INK)
+    draw_text_centered(cv, 94, "MONDAY 23 NOVEMBER 2026", 5, RED)
+    draw_text_centered(cv, 138,
+                       "30 STORIES - 7 REGIONS - ALL REPORTED 23 NOV 2026 (UTC)",
+                       2, FAINT)
+    cv.fill_rect(MARGIN, 158, CONTENT_W, 4, RULE)
 
-    # Six story panels in a 2x3 grid.
-    for i, story in enumerate(STORIES):
-        col = i % 2
-        row = i // 2
-        x = MARGIN + col * (PANEL_W + PANEL_GAP)
-        y = PANELS_TOP + row * (PANEL_H + ROW_GAP)
-        draw_panel(cv, x, y, story)
+    # Three lead stories across the top.
+    lead_y, lead_h, lead_w, lead_gap = 172, 240, 320, 12
+    for i, story in enumerate(LEADS):
+        draw_lead(cv, MARGIN + i * (lead_w + lead_gap), lead_y,
+                  lead_w, lead_h, story)
 
-    # Footer with the source outlets.
-    draw_text_centered(cv, 984,
-                       "SOURCES: REUTERS - AFP VIA THE JAPAN TIMES - JIJI PRESS",
-                       2, SUB)
+    # Ten medium stories, two columns of five.
+    med_y, med_h, med_w, med_gap = 424, 62, 486, 12
+    for i, story in enumerate(MEDIUM):
+        col, row = i % 2, i // 2
+        draw_medium(cv, MARGIN + col * (med_w + med_gap),
+                    med_y + row * (med_h + 6), med_w, med_h, story)
+
+    # The rest of the day as a compact one-line list.
+    list_y = 424 + 5 * med_h + 4 * 6 + 14  # 772
+    draw_text(cv, MARGIN, list_y, "ALSO ON 23 NOVEMBER", 3, INK)
+    cv.fill_rect(MARGIN, list_y + 26, CONTENT_W, 3, RED)
+    item_y = list_y + 38
+    half = (len(ALSO) + 1) // 2
+    for i, item in enumerate(ALSO):
+        col, row = (0, i) if i < half else (1, i - half)
+        x = MARGIN + col * (med_w + med_gap)
+        y = item_y + row * 16
+        cv.fill_rect(x, y + 3, 7, 7, RED)
+        draw_text(cv, x + 14, y, item, 2, INK)
+
+    # Footer: the date check.
+    foot_y = item_y + half * 16 + 8
+    cv.fill_rect(MARGIN, foot_y, CONTENT_W, 3, RULE)
+    draw_text_centered(cv, foot_y + 10,
+                       "DATE CHECK: EVERY STORY ABOVE WAS REPORTED ON "
+                       "MONDAY 23 NOVEMBER 2026", 2, INK)
+    draw_text_centered(cv, foot_y + 28,
+                       "SOURCES: REUTERS - AP - AFP - BBC - DOW JONES - JIJI PRESS",
+                       2, FAINT)
+    cv.fill_rect(MARGIN, foot_y + 50, CONTENT_W, 4, RED)
     return cv
 
 
